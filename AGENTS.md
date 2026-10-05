@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Game rules/scoring live in src/game/config.ts and questions in src/game/data.ts; UI in src/components/feud reads state only via src/game/store.tsx — keeps logic separate from presentation.
