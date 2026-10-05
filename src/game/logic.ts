@@ -65,7 +65,7 @@ export function matchAnswer(feud: Feud, raw: string): number {
   const input = normalize(raw);
   if (!input) return -1;
   for (let i = 0; i < feud.answers.length; i++) {
-    const a = feud.answers[i];
+    const a = feud.answers[i]!;
     if (candidates(a.answer, a.aliases).some((c) => similar(input, c))) return i;
   }
   return -1;
@@ -75,7 +75,7 @@ export function shuffle<T>(arr: T[]) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+    [a[i], a[j]] = [a[j]!, a[i]!];
   }
   return a;
 }

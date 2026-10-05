@@ -116,8 +116,8 @@ function reducer(s: GameState, a: Action): GameState {
       const B = picks(1);
       const order: number[] = [];
       for (let i = 0; i < Math.max(A.length, B.length); i++) {
-        if (A[i] !== undefined) order.push(A[i]);
-        if (B[i] !== undefined) order.push(B[i]);
+        if (A[i] !== undefined) order.push(A[i]!);
+        if (B[i] !== undefined) order.push(B[i]!);
       }
       const rest = shuffle(FEUDS.map((f) => f.id).filter((id) => !order.includes(id)));
       const full = [...order, ...rest].slice(0, totalRounds());

@@ -117,10 +117,11 @@ function TeamPanel({ team }: { team: Team }) {
   const color = team === 0 ? "text-team-a" : "text-team-b";
 
   return (
+    <div className="relative flex-1">
     <div
       key={shake}
       className={cn(
-        "glass clip-notch relative flex-1 p-5 sm:p-6",
+        "glass clip-notch relative h-full p-5 sm:p-6",
         shake && "animate-shake",
         team === 0 ? "border-l-4 border-l-team-a" : "border-r-4 border-r-team-b",
         out && "opacity-60",
@@ -152,7 +153,8 @@ function TeamPanel({ team }: { team: Team }) {
           SUBMIT
         </button>
       </form>
-      <div className="pointer-events-none absolute inset-x-0 -top-8 flex justify-center">
+    </div>
+      <div className="pointer-events-none absolute inset-x-0 -top-10 z-10 flex justify-center">
         {ev && (
           <div key={ev.key} className="animate-pop text-center">
             {ev.kind === "correct" ? (
