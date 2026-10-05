@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import logo from "@/assets/amc-logo.png.asset.json";
+import logo from "@/assets/amc-logo.png";
 import { cn } from "@/lib/utils";
 
 const rnd = (i: number, s: number) => {
@@ -33,7 +33,7 @@ export function Particles({ count = 40 }: { count?: number }) {
 }
 
 export function Logo({ className }: { className?: string }) {
-  return <img src={logo.url} alt="Anime club logo" className={cn("object-contain", className)} />;
+  return <img src={logo} alt="Anime club logo" className={cn("object-contain", className)} />;
 }
 
 export function CountUp({ value, className }: { value: number; className?: string }) {
