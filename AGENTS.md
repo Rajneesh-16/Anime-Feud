@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Game rules/scoring live in src/game/config.ts and questions in src/game/data.ts; UI in src/components/feud reads state only via src/game/store.tsx — keeps logic separate from presentation.
+- Runtime images use bundled project assets rather than Lovable-only asset URLs so local and hosted builds behave consistently.

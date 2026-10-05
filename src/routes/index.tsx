@@ -15,6 +15,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "A live anime quiz battle: two teams, ten feuds, one final winner." },
       { property: "og:title", content: "The Anime Feud — Let the Final Feud Begin" },
       { property: "og:description", content: "A live anime quiz battle: two teams, ten feuds, one final winner." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Index,
