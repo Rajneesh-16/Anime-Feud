@@ -33,7 +33,7 @@ function GameHeader() {
   );
 }
 
-function AnswerCard({ answer, reveal, fresh }: { answer: Answer; reveal?: Reveal; fresh: boolean }) {
+function AnswerCard({ answer, reveal, fresh }: { answer: Answer; reveal?: Reveal | undefined; fresh: boolean }) {
   const { state } = useGame();
   const [main, sub] = answer.answer.split(" — ");
   return (

@@ -14,17 +14,17 @@ export function normalize(s: string) {
 }
 
 function lev(a: string, b: string) {
-  const dp = Array.from({ length: b.length + 1 }, (_, i) => i);
+  const dp: number[] = Array.from({ length: b.length + 1 }, (_, i) => i);
   for (let i = 1; i <= a.length; i++) {
-    let prev = dp[0];
+    let prev = dp[0]!;
     dp[0] = i;
     for (let j = 1; j <= b.length; j++) {
-      const tmp = dp[j];
-      dp[j] = Math.min(dp[j] + 1, dp[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      const tmp = dp[j]!;
+      dp[j] = Math.min(dp[j]! + 1, dp[j - 1]! + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
       prev = tmp;
     }
   }
-  return dp[b.length];
+  return dp[b.length]!;
 }
 
 function candidates(answer: string, aliases: string[]) {
@@ -35,16 +35,17 @@ function candidates(answer: string, aliases: string[]) {
   };
   add(answer);
   aliases.forEach(add);
-  const [head] = answer.split("—");
+  const head = answer.split("—")[0] ?? answer;
   add(head);
   head.split("/").forEach(add);
   // "Goku vs Vegeta" -> also "Vegeta vs Goku", "Goku and Vegeta"
   const vs = head.split(/\s+vs\.?\s+/i);
   if (vs.length === 2) {
-    add(`${vs[1]} vs ${vs[0]}`);
-    add(`${vs[0]} ${vs[1]}`);
-    add(`${vs[1]} ${vs[0]}`);
-    add(`${vs[0]} and ${vs[1]}`);
+    const [v0 = "", v1 = ""] = vs;
+    add(`${v1} vs ${v0}`);
+    add(`${v0} ${v1}`);
+    add(`${v1} ${v0}`);
+    add(`${v0} and ${v1}`);
   }
   return [...out];
 }
