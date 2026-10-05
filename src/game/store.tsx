@@ -143,7 +143,7 @@ function reducer(s: GameState, a: Action): GameState {
         else sfx.wrong();
         return { ...s, round: { ...r, strikes, events } };
       }
-      const base = f.answers[idx].points;
+      const base = f.answers[idx]!.points;
       const pts = Math.round(base * precedenceMultiplier(r.validCount));
       const label = precedenceLabel(r.validCount);
       const roundPts = [...r.roundPts] as [number, number];

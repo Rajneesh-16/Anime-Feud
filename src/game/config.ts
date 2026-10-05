@@ -12,9 +12,9 @@ export const GAME_CONFIG = {
 
 export function precedenceMultiplier(order: number) {
   const m = GAME_CONFIG.precedenceMultipliers;
-  return m[Math.min(order, m.length - 1)];
+  return m[Math.min(order, m.length - 1)] ?? 1;
 }
 export function precedenceLabel(order: number) {
   const l = GAME_CONFIG.precedenceLabels;
-  return l[Math.min(order, l.length - 1)];
+  return l[Math.min(order, l.length - 1)] ?? "";
 }
