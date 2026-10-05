@@ -100,7 +100,7 @@ export function FinalScoreboard() {
       )}
       {revealed && (
         <div className="flex flex-wrap justify-center gap-4">
-          <button className="btn-feud" onClick={() => dispatch({ type: "go", stage: "select" })}>
+          <button className="btn-feud" onClick={() => dispatch({ type: "setTeams", teams: state.teams })}>
             PLAY AGAIN
           </button>
           <button className="btn-ghost-feud" onClick={() => dispatch({ type: "resetGame" })}>
