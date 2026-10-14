@@ -3,9 +3,8 @@ import { GameProvider, useGame } from "@/game/store";
 import { Particles } from "@/components/feud/Shared";
 import { Landing } from "@/components/feud/Landing";
 import { TeamSetup } from "@/components/feud/TeamSetup";
-import { CategorySelect } from "@/components/feud/CategorySelect";
 import { FeudGame } from "@/components/feud/FeudGame";
-import { FinalScoreboard, RoundSummary } from "@/components/feud/Results";
+import { FinalScoreboard, RoundSummary, TieAnnounce } from "@/components/feud/Results";
 import { GameMaster } from "@/components/feud/GameMaster";
 
 export const Route = createFileRoute("/")({
@@ -27,7 +26,7 @@ function Stage() {
   const screens = {
     landing: <Landing />,
     setup: <TeamSetup />,
-    select: <CategorySelect />,
+    tie: <TieAnnounce />,
     game: <FeudGame />,
     summary: <RoundSummary />,
     final: <FinalScoreboard />,

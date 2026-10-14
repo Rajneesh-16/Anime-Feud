@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { Settings2, Volume2, VolumeX, X } from "lucide-react";
-import { currentFeud, teamLabel, useGame, type Team } from "@/game/store";
+import { teamLabel, useGame, type Team } from "@/game/store";
 import { cn } from "@/lib/utils";
-import { pad } from "./Shared";
 
 export function GameMaster() {
   const { state, dispatch } = useGame();
   const [open, setOpen] = useState(false);
-  const feud = currentFeud(state);
-  const inGame = state.stage === "game" || state.stage === "summary";
+  const inGame = !state.ended && (state.stage === "game" || state.stage === "summary" || state.stage === "tie");
 
   const btn = "border border-border px-3 py-2 text-sm font-bold tracking-wider transition hover:border-primary hover:bg-primary/15 disabled:opacity-30";
 
@@ -31,17 +29,24 @@ export function GameMaster() {
             </button>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <button className={btn} disabled={state.stage === "game" || state.stage === "select"} onClick={() => dispatch({ type: "go", stage: state.teams[0] ? "select" : "setup" })}>
+            <button className={btn} disabled={inGame} onClick={() => (state.teams[0] ? dispatch({ type: "setTeams", teams: state.teams }) : dispatch({ type: "go", stage: "setup" }))}>
               Start game
             </button>
             <button className={btn} disabled={state.stage !== "game"} onClick={() => dispatch({ type: "togglePause" })}>
               {state.paused ? "Resume" : "Pause"}
             </button>
-            <button className={btn} disabled={!inGame} onClick={() => dispatch({ type: "nextRound" })}>
+            <button className={btn} disabled={!inGame || state.stage === "tie"} onClick={() => dispatch({ type: "nextRound" })}>
               Next round
             </button>
-            <button className={btn} disabled={!inGame} onClick={() => dispatch({ type: "resetRound" })}>
+            <button className={btn} disabled={!inGame || state.stage === "tie"} onClick={() => dispatch({ type: "resetRound" })}>
               Reset round
+            </button>
+            <button
+              className={cn(btn, "col-span-2 border-primary text-primary")}
+              disabled={!inGame}
+              onClick={() => confirm("End the game now and show final scores?") && dispatch({ type: "endGame" })}
+            >
+              End game
             </button>
             <button
               className={cn(btn, "col-span-2 border-destructive/50 text-destructive")}
@@ -71,26 +76,6 @@ export function GameMaster() {
             </>
           )}
 
-          {state.stage === "game" && feud && (
-            <>
-              <p className="mt-5 text-xs font-bold tracking-[0.25em] text-muted-foreground">REVEAL ANSWER (NO POINTS)</p>
-              <div className="mt-2 flex flex-col gap-1">
-                {feud.answers.map((a, i) => (
-                  <button
-                    key={a.rank}
-                    disabled={!!state.round.revealed[i]}
-                    onClick={() => dispatch({ type: "gmReveal", idx: i })}
-                    className="flex justify-between gap-2 border border-border px-2 py-1 text-left text-sm hover:border-primary disabled:opacity-30"
-                  >
-                    <span className="truncate">
-                      {pad(a.rank)} {a.answer}
-                    </span>
-                    <span className="shrink-0 font-bold">{a.points}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
         </aside>
       )}
     </>
