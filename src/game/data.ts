@@ -1,4 +1,4 @@
-import { GAME_CONFIG } from "./config";
+import { pointsForRank } from "./config";
 
 export type Answer = { rank: number; answer: string; points: number; aliases: string[] };
 export type Feud = { id: number; round: number; category: string; prompt: string; answers: Answer[]; tiebreaker?: boolean };
@@ -14,7 +14,7 @@ function build(id: number, category: string, prompt: string, raw: Raw[], tiebrea
     answers: raw.map(([answer, aliases = []], i) => ({
       rank: i + 1,
       answer,
-      points: GAME_CONFIG.rankPoints[i] ?? 10,
+      points: pointsForRank(i + 1),
       aliases,
     })),
   };

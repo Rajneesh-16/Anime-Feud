@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, type ReactNode } from "react";
-import { GAME_CONFIG, precedenceLabel, precedenceMultiplier } from "./config";
+import { GAME_CONFIG, pointsForRank } from "./config";
 import { ALL_FEUDS, FEUDS, TIEBREAKER, type Feud } from "./data";
 import { matchAnswer } from "./logic";
 import { setMuted, sfx } from "./sfx";
@@ -106,7 +106,7 @@ export function reducer(s: GameState, a: Action): GameState {
       if (hidden.length === 0) return s;
       const revealed = { ...s.round.revealed };
       for (const { answer, idx } of hidden) {
-        revealed[idx] = { team: null, points: answer.points, label: "UNCLAIMED" };
+        revealed[idx] = { team: null, points: pointsForRank(answer.rank), label: "UNCLAIMED" };
       }
       return { ...s, round: { ...s.round, revealed, lastRevealed: null } };
     }
@@ -130,9 +130,10 @@ export function reducer(s: GameState, a: Action): GameState {
         else sfx.wrong();
         return { ...s, round: { ...r, strikes, events } };
       }
-      const base = f.answers[idx]!.points;
-      const pts = Math.round(base * precedenceMultiplier(r.validCount));
-      const label = precedenceLabel(r.validCount);
+      const answer = f.answers[idx];
+      if (!answer) return s;
+      const pts = pointsForRank(answer.rank);
+      const label = "CORRECT ANSWER";
       const roundPts = [...r.roundPts] as [number, number];
       roundPts[a.team] += pts;
       const scores = [...s.scores] as [number, number];
