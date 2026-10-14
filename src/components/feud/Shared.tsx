@@ -12,17 +12,17 @@ export function Particles({ count = 40 }: { count?: number }) {
     <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
       <div className="arena-grid absolute inset-0" />
       {Array.from({ length: count }).map((_, i) => {
-        const size = 1.5 + rnd(i, 1) * 3;
+        const size = (1.5 + rnd(i, 1) * 3).toFixed(2);
         return (
           <span
             key={i}
             className="particle"
             style={{
-              left: `${rnd(i, 2) * 100}%`,
-              width: size,
-              height: size,
-              animationDuration: `${10 + rnd(i, 3) * 16}s`,
-              animationDelay: `${-rnd(i, 4) * 20}s`,
+              left: `${(rnd(i, 2) * 100).toFixed(2)}%`,
+              width: `${size}px`,
+              height: `${size}px`,
+              animationDuration: `${(10 + rnd(i, 3) * 16).toFixed(2)}s`,
+              animationDelay: `${(-rnd(i, 4) * 20).toFixed(2)}s`,
               opacity: 0.6,
             }}
           />
