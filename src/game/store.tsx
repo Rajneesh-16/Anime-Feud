@@ -56,6 +56,7 @@ type Action =
   | { type: "go"; stage: Stage }
   | { type: "setTeams"; teams: [string, string] }
   | { type: "endGame" }
+  | { type: "revealAnswers" }
   | { type: "startTiebreak" }
   | { type: "submit"; team: Team; text: string }
   | { type: "endRound" }
@@ -81,7 +82,7 @@ export const isRoundOver = (s: GameState) => {
 
 let evKey = 0;
 
-function reducer(s: GameState, a: Action): GameState {
+export function reducer(s: GameState, a: Action): GameState {
   switch (a.type) {
     case "load":
       return a.state;
@@ -98,6 +99,17 @@ function reducer(s: GameState, a: Action): GameState {
     case "endGame":
       if (s.ended) return s;
       return { ...s, ended: true, paused: false, stage: "final" };
+    case "revealAnswers": {
+      const f = currentFeud(s);
+      if (s.ended || s.stage !== "game" || !f) return s;
+      const hidden = f.answers.map((answer, idx) => ({ answer, idx })).filter(({ idx }) => !s.round.revealed[idx]);
+      if (hidden.length === 0) return s;
+      const revealed = { ...s.round.revealed };
+      for (const { answer, idx } of hidden) {
+        revealed[idx] = { team: null, points: answer.points, label: "UNCLAIMED" };
+      }
+      return { ...s, round: { ...s.round, revealed, lastRevealed: null } };
+    }
     case "submit": {
       const f = currentFeud(s);
       if (!f || s.ended || s.paused || isRoundOver(s)) return s;
@@ -171,6 +183,7 @@ function reducer(s: GameState, a: Action): GameState {
       return { ...s, scores };
     }
     case "togglePause":
+      if (s.ended) return s;
       return { ...s, paused: !s.paused };
     case "toggleMute":
       return { ...s, muted: !s.muted };

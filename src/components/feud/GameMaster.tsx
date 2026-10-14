@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Settings2, Volume2, VolumeX, X } from "lucide-react";
-import { teamLabel, useGame, type Team } from "@/game/store";
+import { Eye, Settings2, Volume2, VolumeX, X } from "lucide-react";
+import { currentFeud, teamLabel, useGame, type Team } from "@/game/store";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function GameMaster() {
   const { state, dispatch } = useGame();
   const [open, setOpen] = useState(false);
   const inGame = !state.ended && (state.stage === "game" || state.stage === "summary" || state.stage === "tie");
+  const feud = currentFeud(state);
+  const hasHiddenAnswers = feud?.answers.some((_, idx) => !state.round.revealed[idx]) ?? false;
 
   const btn = "border border-border px-3 py-2 text-sm font-bold tracking-wider transition hover:border-primary hover:bg-primary/15 disabled:opacity-30";
 
@@ -41,6 +44,14 @@ export function GameMaster() {
             <button className={btn} disabled={!inGame || state.stage === "tie"} onClick={() => dispatch({ type: "resetRound" })}>
               Reset round
             </button>
+            <Button
+              variant="ghost"
+              className={cn(btn, "col-span-2 h-auto rounded-none border-primary text-primary")}
+              disabled={state.ended || state.stage !== "game" || !hasHiddenAnswers}
+              onClick={() => dispatch({ type: "revealAnswers" })}
+            >
+              <Eye className="h-4 w-4" /> Reveal Answers
+            </Button>
             <button
               className={cn(btn, "col-span-2 border-primary text-primary")}
               disabled={!inGame}
