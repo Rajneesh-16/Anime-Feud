@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useReducer, type ReactNode } from "react";
 import { GAME_CONFIG, precedenceLabel, precedenceMultiplier } from "./config";
-import { FEUDS, type Feud } from "./data";
-import { matchAnswer, shuffle } from "./logic";
+import { ALL_FEUDS, FEUDS, TIEBREAKER, type Feud } from "./data";
+import { matchAnswer } from "./logic";
 import { setMuted, sfx } from "./sfx";
 
 export type Team = 0 | 1;
-export type Stage = "landing" | "setup" | "select" | "game" | "summary" | "final";
+export type Stage = "landing" | "setup" | "game" | "tie" | "summary" | "final";
 export type Reveal = { team: Team | null; points: number; label: string };
 export type TeamEvent = { kind: "correct" | "wrong" | "dup" | "out"; text: string; points?: number; key: number };
 
@@ -22,12 +22,13 @@ export type GameState = {
   stage: Stage;
   teams: [string, string];
   scores: [number, number];
-  claims: Record<number, Team>;
   order: number[];
   roundIdx: number;
   round: RoundState;
   paused: boolean;
   muted: boolean;
+  /** Set once the game is finalized (normal finish or GM "End Game"). Locks scoring. */
+  ended: boolean;
 };
 
 const freshRound = (): RoundState => ({
@@ -43,22 +44,20 @@ export const initialState: GameState = {
   stage: "landing",
   teams: ["", ""],
   scores: [0, 0],
-  claims: {},
   order: [],
   roundIdx: 0,
   round: freshRound(),
   paused: false,
   muted: false,
+  ended: false,
 };
 
 type Action =
   | { type: "go"; stage: Stage }
   | { type: "setTeams"; teams: [string, string] }
-  | { type: "claim"; id: number }
-  | { type: "unclaim"; id: number }
-  | { type: "begin" }
+  | { type: "endGame" }
+  | { type: "startTiebreak" }
   | { type: "submit"; team: Team; text: string }
-  | { type: "gmReveal"; idx: number }
   | { type: "endRound" }
   | { type: "nextRound" }
   | { type: "resetRound" }
@@ -68,17 +67,10 @@ type Action =
   | { type: "toggleMute" }
   | { type: "load"; state: GameState };
 
-export const activeFeuds = (s: GameState) => s.order.map((id) => FEUDS.find((f) => f.id === id)!);
+export const activeFeuds = (s: GameState) => s.order.map((id) => ALL_FEUDS.find((f) => f.id === id)!);
 export const currentFeud = (s: GameState): Feud | undefined => activeFeuds(s)[s.roundIdx];
-export const totalRounds = () => Math.min(GAME_CONFIG.activeRounds, FEUDS.length);
-export const pickingTeam = (s: GameState): Team | null => {
-  const c = Object.values(s.claims);
-  const a = c.filter((t) => t === 0).length;
-  const b = c.filter((t) => t === 1).length;
-  if (a < GAME_CONFIG.picksPerTeam) return 0;
-  if (b < GAME_CONFIG.picksPerTeam) return 1;
-  return null;
-};
+export const totalRounds = () => FEUDS.length;
+export const isTiebreaker = (s: GameState) => !!currentFeud(s)?.tiebreaker;
 export const isRoundOver = (s: GameState) => {
   const f = currentFeud(s);
   if (!f) return false;
@@ -96,36 +88,19 @@ function reducer(s: GameState, a: Action): GameState {
     case "go":
       return { ...s, stage: a.stage };
     case "setTeams":
-      return { ...s, teams: a.teams, stage: "select", claims: {} };
-    case "claim": {
-      const t = pickingTeam(s);
-      if (t === null || s.claims[a.id] !== undefined) return s;
-      return { ...s, claims: { ...s.claims, [a.id]: t } };
-    }
-    case "unclaim": {
-      const claims = { ...s.claims };
-      delete claims[a.id];
-      return { ...s, claims };
-    }
-    case "begin": {
-      const picks = (t: Team) =>
-        Object.entries(s.claims)
-          .filter(([, v]) => v === t)
-          .map(([k]) => Number(k));
-      const A = picks(0);
-      const B = picks(1);
-      const order: number[] = [];
-      for (let i = 0; i < Math.max(A.length, B.length); i++) {
-        if (A[i] !== undefined) order.push(A[i]!);
-        if (B[i] !== undefined) order.push(B[i]!);
-      }
-      const rest = shuffle(FEUDS.map((f) => f.id).filter((id) => !order.includes(id)));
-      const full = [...order, ...rest].slice(0, totalRounds());
-      return { ...s, order: full, roundIdx: 0, round: freshRound(), scores: [0, 0], stage: "game", paused: false };
-    }
+      return {
+        ...initialState,
+        muted: s.muted,
+        teams: a.teams,
+        order: FEUDS.map((f) => f.id),
+        stage: "game",
+      };
+    case "endGame":
+      if (s.ended) return s;
+      return { ...s, ended: true, paused: false, stage: "final" };
     case "submit": {
       const f = currentFeud(s);
-      if (!f || s.paused || isRoundOver(s)) return s;
+      if (!f || s.ended || s.paused || isRoundOver(s)) return s;
       const r = s.round;
       if (r.strikes[a.team] >= GAME_CONFIG.maxStrikes) return s;
       const idx = matchAnswer(f, a.text);
@@ -165,26 +140,32 @@ function reducer(s: GameState, a: Action): GameState {
         },
       };
     }
-    case "gmReveal": {
-      if (s.round.revealed[a.idx]) return s;
-      sfx.reveal();
-      return {
-        ...s,
-        round: { ...s.round, revealed: { ...s.round.revealed, [a.idx]: { team: null, points: 0, label: "REVEALED" } }, lastRevealed: a.idx },
-      };
-    }
     case "endRound":
+      if (s.ended) return s;
       return { ...s, stage: "summary" };
-    case "nextRound":
-      if (s.roundIdx + 1 >= s.order.length) return { ...s, stage: "final" };
+    case "nextRound": {
+      if (s.ended || s.stage === "tie") return s;
+      if (s.roundIdx + 1 >= s.order.length) {
+        const tiebreakPlayed = s.order.includes(TIEBREAKER.id);
+        if (!tiebreakPlayed && s.scores[0] === s.scores[1]) {
+          return { ...s, order: [...s.order, TIEBREAKER.id], stage: "tie", paused: false };
+        }
+        return { ...s, ended: true, stage: "final" };
+      }
       return { ...s, roundIdx: s.roundIdx + 1, round: freshRound(), stage: "game", paused: false };
+    }
+    case "startTiebreak":
+      if (s.stage !== "tie") return s;
+      return { ...s, roundIdx: s.order.length - 1, round: freshRound(), stage: "game", paused: false };
     case "resetRound": {
+      if (s.ended) return s;
       const scores: [number, number] = [s.scores[0] - s.round.roundPts[0], s.scores[1] - s.round.roundPts[1]];
       return { ...s, scores, round: freshRound(), stage: "game" };
     }
     case "resetGame":
       return { ...initialState, muted: s.muted };
     case "adjust": {
+      if (s.ended) return s;
       const scores = [...s.scores] as [number, number];
       scores[a.team] = Math.max(0, scores[a.team] + a.delta);
       return { ...s, scores };
@@ -196,7 +177,7 @@ function reducer(s: GameState, a: Action): GameState {
   }
 }
 
-const KEY = "anime-feud-state-v1";
+const KEY = "anime-feud-state-v2";
 const Ctx = createContext<{ state: GameState; dispatch: (a: Action) => void } | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
