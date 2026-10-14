@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { GAME_CONFIG } from "@/game/config";
 import type { Answer } from "@/game/data";
-import { currentFeud, isRoundOver, teamLabel, useGame, type Reveal, type Team } from "@/game/store";
+import { currentFeud, isRoundOver, teamLabel, totalRounds, useGame, type Reveal, type Team } from "@/game/store";
 import { cn } from "@/lib/utils";
 import { CountUp, Logo, pad } from "./Shared";
 
