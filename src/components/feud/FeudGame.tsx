@@ -42,7 +42,7 @@ function AnswerCard({ answer, reveal, fresh }: { answer: Answer; reveal?: Reveal
         <div
           className={cn(
             "clip-blade flex h-16 items-center gap-3 px-5 sm:h-20",
-            fresh && "animate-flip",
+            (fresh || reveal.team === null) && "animate-flip",
             reveal.team === 0 && "bg-team-a/25 glow-team-a",
             reveal.team === 1 && "bg-team-b/20 glow-team-b",
             reveal.team === null && "bg-secondary",
