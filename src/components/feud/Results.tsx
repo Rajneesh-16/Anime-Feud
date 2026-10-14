@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Trophy } from "lucide-react";
 import { sfx } from "@/game/sfx";
-import { currentFeud, teamLabel, useGame, type Team } from "@/game/store";
+import { TIEBREAKER } from "@/game/data";
+import { currentFeud, teamLabel, totalRounds, useGame, type Team } from "@/game/store";
 import { cn } from "@/lib/utils";
 import { Confetti, CountUp, Logo, pad } from "./Shared";
 
@@ -9,6 +10,7 @@ export function RoundSummary() {
   const { state, dispatch } = useGame();
   const feud = currentFeud(state);
   const last = state.roundIdx + 1 >= state.order.length;
+  const tied = last && !feud?.tiebreaker && state.scores[0] === state.scores[1];
   const [show, setShow] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setShow(true), 300);
@@ -28,7 +30,7 @@ export function RoundSummary() {
   return (
     <section className="relative mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center gap-10 px-6 py-12">
       <div className="animate-rise text-center">
-        <p className="font-display tracking-[0.4em] text-primary">ROUND {pad(state.roundIdx + 1)} • {feud?.category}</p>
+        <p className="font-display tracking-[0.4em] text-primary">{feud?.tiebreaker ? "TIE-BREAKER" : `ROUND ${pad(state.roundIdx + 1)}`} • {feud?.category}</p>
         <h1 className="text-glow text-6xl sm:text-8xl">ROUND COMPLETE</h1>
       </div>
       <div className="flex w-full flex-col gap-6 md:flex-row">
@@ -36,7 +38,25 @@ export function RoundSummary() {
         {row(1)}
       </div>
       <button className="btn-feud" onClick={() => dispatch({ type: "nextRound" })}>
-        {last ? "FINAL SCORES" : "NEXT FEUD"}
+        {tied ? "SCORES TIED — CONTINUE" : last ? "FINAL SCORES" : "NEXT FEUD"}
+      </button>
+    </section>
+  );
+}
+
+export function TieAnnounce() {
+  const { state, dispatch } = useGame();
+  return (
+    <section className="relative mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center gap-8 px-6 py-12 text-center">
+      <p className="animate-rise font-display tracking-[0.4em] text-primary">AFTER {pad(totalRounds())} ROUNDS</p>
+      <h1 className="text-glow animate-claim text-7xl sm:text-9xl">IT'S A TIE!</h1>
+      <p className="font-display text-4xl">
+        <span className="text-team-a">{teamLabel(state, 0)}</span> {state.scores[0]} — {state.scores[1]}{" "}
+        <span className="text-team-b">{teamLabel(state, 1)}</span>
+      </p>
+      <p className="text-xl text-muted-foreground">One more feud decides the champion: <span className="font-bold text-foreground">{TIEBREAKER.category}</span></p>
+      <button className="btn-feud" onClick={() => dispatch({ type: "startTiebreak" })}>
+        START TIE-BREAKER
       </button>
     </section>
   );
@@ -85,6 +105,7 @@ export function FinalScoreboard() {
               <Trophy className="h-16 w-16 text-accent" />
               <p className="font-display text-2xl tracking-[0.4em] text-accent">WINNER</p>
               <p className="animate-winner font-display text-6xl uppercase sm:text-8xl">{teamLabel(state, winner)}</p>
+              <p className="font-display text-xl text-muted-foreground">WINS BY {Math.abs(a - b)} POINTS</p>
               <p className="mt-2 text-xl italic text-muted-foreground">“THE ULTIMATE ANIME FEUD CHAMPIONS”</p>
               <p className="mt-4 text-base text-muted-foreground">
                 Respect to <span className="font-bold text-foreground">{teamLabel(state, winner === 0 ? 1 : 0)}</span> — a hard-fought feud to the very end.

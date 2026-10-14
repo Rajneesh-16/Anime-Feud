@@ -25,7 +25,7 @@ function GameHeader() {
         <Logo className="h-10 w-10 sm:h-14 sm:w-14" />
         <p className="font-display text-sm tracking-widest sm:text-xl">THE ANIME FEUD</p>
         <p className="text-xs font-bold tracking-[0.25em] text-muted-foreground sm:text-sm">
-          ROUND {pad(state.roundIdx + 1)} / {pad(state.order.length)}
+          {feud?.tiebreaker ? "TIE-BREAKER" : `ROUND ${pad(state.roundIdx + 1)} / ${pad(totalRounds())}`}
         </p>
       </div>
       {side(1)}
